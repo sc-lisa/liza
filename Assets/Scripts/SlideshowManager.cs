@@ -8,29 +8,68 @@ public class SlideshowManager : MonoBehaviour
   const int FPS = 12;
   const float DELTA_T = 1f / FPS;
   const int CYCLE_DURATION = 2;
-  const int CYCLE_SIZE = FPS * CYCLE_DURATION;
+  const int CYCLE_SIZE = FPS * CYCLE_DURATION + 2;
 
   [SerializeField]
-  private RawImage viewport;
+  private RawImage _viewport;
   [SerializeField]
   private AspectRatioFitter fitter;
   private WebCamTexture cam;
+  private bool available = false;
 
   private Texture2D[] cycle;
   private int cyclePos;
 
-  private bool available = false;
+  private Slideshow slideshow = null;
+
+  public RawImage viewport
+  {
+    get
+    {
+      return _viewport;
+    }
+  }
+
 
   public bool IsAvailable()
   {
     return available;
   }
+  private bool _updateViewport = true;
+
+  public bool updateViewport
+  {
+    get
+    {
+      return _updateViewport;
+    }
+    set
+    {
+      if (_updateViewport == value) return;
+      _updateViewport = value;
+      if (!value)
+      {
+        _viewport.texture = null;
+      }
+      else
+      {
+        showTexture(cycle[cyclePos]);
+      }
+    }
+  }
 
   void setCamera(WebCamDevice device)
   {
-    var rect = viewport.rectTransform.rect;
-    cam = new WebCamTexture(device.name, (int)rect.width, (int)rect.height);
+    var rect = _viewport.rectTransform.rect;
+    if (device.isFrontFacing)
+      cam = new WebCamTexture(device.name, 600, 300);
+    else
+      cam = new WebCamTexture(device.name, (int)rect.width, (int)rect.height);
     available = true;
+    var scaleY = cam.videoVerticallyMirrored ? -1f : 1f;
+    _viewport.rectTransform.localScale = new Vector3(1f, scaleY, 1f);
+    var orient = -cam.videoRotationAngle;
+    _viewport.rectTransform.localEulerAngles = new Vector3(0, 0, orient);
     cam.Play();
   }
 
@@ -62,9 +101,43 @@ public class SlideshowManager : MonoBehaviour
     StartCoroutine(CaptureCycle());
   }
 
-  public void ShowSlideshow() { }
+  public IEnumerator ShowSlideshow(Slideshow slideshow)
+  {
+    updateViewport = false;
+    // TODO
+    print(slideshow);
+    yield return new WaitForSeconds(4);
+    updateViewport = true;
+  }
 
-  public void TakeSlideshow() { }
+  public void StartSlideshow()
+  {
+    var pos = cyclePos;
+    var ss = new Slideshow();
+    var tex = new Texture2D(cam.width, cam.height);
+    Graphics.CopyTexture(cycle[pos == 0 ? CYCLE_SIZE - 1 : pos - 1], tex);
+    tex.Apply();
+    ss.images.Add(tex);
+    tex = new Texture2D(cam.width, cam.height);
+    Graphics.CopyTexture(cycle[pos], tex);
+    tex.Apply();
+    ss.images.Add(tex);
+    slideshow = ss;
+  }
+
+  public Slideshow StopSlideshow()
+  {
+    var res = slideshow;
+    slideshow = null;
+    return res;
+  }
+
+  void showTexture(Texture2D tex)
+  {
+    if (!_updateViewport) return;
+    _viewport.texture = tex;
+    fitter.aspectRatio = (float)tex.width / (float)tex.height;
+  }
 
   public IEnumerator CaptureCycle()
   {
@@ -74,11 +147,27 @@ public class SlideshowManager : MonoBehaviour
       yield return new WaitForEndOfFrame();
       cycle[cyclePos].SetPixels(cam.GetPixels());
       cycle[cyclePos].Apply();
+      showTexture(cycle[cyclePos]);
+      if (slideshow != null)
+      {
+        var tex = new Texture2D(cam.width, cam.height);
+        Graphics.CopyTexture(cycle[cyclePos], tex);
+        tex.Apply();
+        slideshow.images.Add(tex);
+      }
       cyclePos++;
       if (cyclePos == CYCLE_SIZE) cyclePos = 0;
       var sleepTime = Time.time - currTime + DELTA_T;
       if (sleepTime > 0)
         yield return new WaitForSecondsRealtime(sleepTime);
+    }
+  }
+
+  public bool isRecording
+  {
+    get
+    {
+      return slideshow != null;
     }
   }
 }

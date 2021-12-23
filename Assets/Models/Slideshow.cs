@@ -8,6 +8,11 @@ public class Slideshow
   public System.DateTime timestamp;
   public List<Texture2D> images;
 
+  public Slideshow()
+  {
+    images = new List<Texture2D>();
+  }
+
   public int Length
   {
     get
