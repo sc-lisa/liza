@@ -105,8 +105,12 @@ public class SlideshowManager : MonoBehaviour
   {
     updateViewport = false;
     // TODO
-    print(slideshow);
-    yield return new WaitForSeconds(4);
+    foreach (var tex in slideshow.images)
+    {
+      showTexture(tex);
+      yield return new WaitForSecondsRealtime(DELTA_T);
+    }
+    yield return new WaitForSecondsRealtime(5);
     updateViewport = true;
   }
 
@@ -134,7 +138,6 @@ public class SlideshowManager : MonoBehaviour
 
   void showTexture(Texture2D tex)
   {
-    if (!_updateViewport) return;
     _viewport.texture = tex;
     fitter.aspectRatio = (float)tex.width / (float)tex.height;
   }
@@ -147,7 +150,8 @@ public class SlideshowManager : MonoBehaviour
       yield return new WaitForEndOfFrame();
       cycle[cyclePos].SetPixels(cam.GetPixels());
       cycle[cyclePos].Apply();
-      showTexture(cycle[cyclePos]);
+      if (_updateViewport)
+        showTexture(cycle[cyclePos]);
       if (slideshow != null)
       {
         var tex = new Texture2D(cam.width, cam.height);

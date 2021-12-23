@@ -44,12 +44,16 @@ public class SlideShowController : MonoBehaviour
   void pressShow()
   {
     if (showCoro != null)
+    {
       StopCoroutine(showCoro);
+      showCoro = null;
+    }
     if (manager.isRecording)
     {
       slideshow = manager.StopSlideshow();
       updateTextOnButton();
     }
-    showCoro = StartCoroutine(manager.ShowSlideshow(slideshow));
+    if (slideshow != null)
+      showCoro = StartCoroutine(manager.ShowSlideshow(slideshow));
   }
 }
