@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/TestGallery.unity
+    guid: be30da0050d2aaa709a26eb516074f40
+  - enabled: 0
     path: Assets/Scenes/SlideShow.unity
     guid: 222137239c957be8b9d254109bfa169a
   - enabled: 0

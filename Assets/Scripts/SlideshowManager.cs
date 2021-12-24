@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class SlideshowManager : MonoBehaviour
 {
-  const int FPS = 12;
-  const float DELTA_T = 1f / FPS;
+  public const int FPS = 12;
+  public const float DELTA_T = 1f / FPS;
   const int CYCLE_DURATION = 2;
   const int CYCLE_SIZE = FPS * CYCLE_DURATION + 2;
 
@@ -35,8 +35,8 @@ public class SlideshowManager : MonoBehaviour
   {
     return available;
   }
-  private bool _updateViewport = true;
 
+  private bool _updateViewport = true;
   public bool updateViewport
   {
     get
@@ -53,7 +53,7 @@ public class SlideshowManager : MonoBehaviour
       }
       else
       {
-        showTexture(cycle[cyclePos]);
+        ShowTexture(cycle[cyclePos]);
       }
     }
   }
@@ -103,15 +103,18 @@ public class SlideshowManager : MonoBehaviour
 
   public IEnumerator ShowSlideshow(Slideshow slideshow)
   {
+    var prevUpdateViewport = _updateViewport;
+    var prevTexture = viewport.texture;
     updateViewport = false;
-    // TODO
     foreach (var tex in slideshow.images)
     {
-      showTexture(tex);
+      ShowTexture(tex);
       yield return new WaitForSecondsRealtime(DELTA_T);
     }
     yield return new WaitForSecondsRealtime(5);
-    updateViewport = true;
+    viewport.texture = prevTexture;
+    if (prevUpdateViewport)
+      updateViewport = true;
   }
 
   public void StartSlideshow()
@@ -136,7 +139,7 @@ public class SlideshowManager : MonoBehaviour
     return res;
   }
 
-  void showTexture(Texture2D tex)
+  public void ShowTexture(Texture2D tex)
   {
     _viewport.texture = tex;
     fitter.aspectRatio = (float)tex.width / (float)tex.height;
@@ -151,7 +154,7 @@ public class SlideshowManager : MonoBehaviour
       cycle[cyclePos].SetPixels(cam.GetPixels());
       cycle[cyclePos].Apply();
       if (_updateViewport)
-        showTexture(cycle[cyclePos]);
+        ShowTexture(cycle[cyclePos]);
       if (slideshow != null)
       {
         var tex = new Texture2D(cam.width, cam.height);
